@@ -1,0 +1,37 @@
+@startuml
+|AuthenticationManager|
+start
+:Receive registration request with userData;
+:Call registerUser(userData);
+
+|UserStorageManager|
+:Call isUsernameUnique(userData.username);
+if (Username unique?) then (yes)
+  |UserProfile|
+  :Invoke new UserProfile();
+  :validateUsername();
+  :validatePassword();
+  if (Validation successful?) then (yes)
+    |NotificationPreferences|
+    :Initialize NotificationPreferences(
+    \tuserData.emailNotif,
+    \tuserData.pushNotif,
+    \tuserData.smsNotif);
+    |UserStorageManager|
+    :saveUserProfile(user);
+    |AuthenticationManager|
+    :Return "Registration Successful";
+  else (no)
+    |AuthenticationManager|
+    :Return "Validation Error";
+    stop
+  endif
+else (no)
+  |AuthenticationManager|
+  :Return "Username Already Exists";
+  stop
+endif
+:Registration Complete;
+:Raff;
+stop
+@enduml
