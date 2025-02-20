@@ -1,37 +1,83 @@
-@startuml
-|AuthenticationManager|
+@startuml Example Activity Diagram
+
+
+|NotificationPreferences|
+|UserProfile|
+|LoginView|
 start
-:Receive registration request with userData;
-:Call registerUser(userData);
+:Receive registration button click;
+:readUsernameTextbox();
+:readPasswordTextbox();
+:readEmailTextbox();
+:readNotificationPreferences();
+:CreateNotificationPreferences object;
+|NotificationPreferences|
+:NotificationPreferences(frequency: NotificationFrequency, isEnabled: bool);
+|LoginView|
+:Create UserProfile object;
+|UserProfile|
+:UserProfile(username: string, email: string, notificationPreferences: NotificationPreferences);
+
+|LoginView|
+
+:registerUser(userProfile: UserProfile, password: string);
+
+|AuthenticationManager|
+:validateUsername(username: string);
+if () then ([invalid username])
+|LoginView|
+    :displayError("Username must use only letters");
+    stop
+else ([valid username])
+endif
+|AuthenticationManager|
+
+:validatePassword(password: string);
+if () then ([invalid password])
+|LoginView|
+    :displayError("Password must be at least 8 characters long");
+    stop
+else ([valid password])
+endif
+|AuthenticationManager|
+
+:hashPassword();
+
+:validateEmail(email: string);
+if () then ([invalid email])
+|LoginView|
+    :displayError("Invalid email address");
+    stop
+else ([valid email])
+endif
+|AuthenticationManager|
+
+:saveNewUser(userProfile: UserProfile, password: string);
 
 |UserStorageManager|
-:Call isUsernameUnique(userData.username);
-if (Username unique?) then (yes)
-  |UserProfile|
-  :Invoke new UserProfile();
-  :validateUsername();
-  :validatePassword();
-  if (Validation successful?) then (yes)
-    |NotificationPreferences|
-    :Initialize NotificationPreferences(
-    \tuserData.emailNotif,
-    \tuserData.pushNotif,
-    \tuserData.smsNotif);
-    |UserStorageManager|
-    :saveUserProfile(user);
-    |AuthenticationManager|
-    :Return "Registration Successful";
-  else (no)
-    |AuthenticationManager|
-    :Return "Validation Error";
+:findUserByUsername(username: string);
+if () then ([user found])
+|AuthenticationManager|
+    :Return RegistrationStatus.USER_ALREADY_EXISTS;
+|LoginView|
+    :displayError("Username already exists");
     stop
-  endif
-else (no)
-  |AuthenticationManager|
-  :Return "Username Already Exists";
-  stop
+else ([user not found])
+|UserStorageManager|
+:saveUserToDatabase(userProfile: UserProfile);
+|AuthenticationManager|
+if () then ([save successful])
+    |AuthenticationManager|
+    :Return RegistrationStatus.SUCCESS;
+|LoginView|
+    :transitionToHomeView(userProfile: UserProfile);
+    stop
+else ([save unsuccessful])
+    |AuthenticationManager|
+    :\nReturn RegistrationStatus.UNKNOWN_ERROR\n;
+|LoginView|
+    :displayError("Registration failed. Internal error");
+    stop
 endif
-:Registration Complete;
-:Raff;
-stop
+
 @enduml
